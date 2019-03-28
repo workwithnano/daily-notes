@@ -25,6 +25,9 @@ finishedTodos = []
 # Need to keep track of indent level so everything underneath a bullet gets included with it
 finishedTodo = false
 
+# Date we're going through
+reorderingTodaysTodos = false
+
 # Loop through all the selected lines
 lines.each_with_index do |line, idx|
 	
@@ -38,13 +41,17 @@ lines.each_with_index do |line, idx|
 	end
 	
 	if (idx == 0)
-		finishedTodos << line
+		if line.strip == "## #{todaysDate}"
+			reorderingTodaysTodos = true
+		else
+			finishedTodos << line
+		end
 	elsif (idx == 1)
-		finishedTodos << ''
+		finishedTodos << '' unless reorderingTodaysTodos
 	elsif (idx == 2)
-		finishedTodos << line
+		finishedTodos << line unless reorderingTodaysTodos
 	elsif (idx == 3)
-		finishedTodos << ''
+		finishedTodos << '' unless reorderingTodaysTodos
 		
 #################################################
 	
@@ -69,6 +76,7 @@ lines.each_with_index do |line, idx|
 			finishedTodo = false
 		end
 		
+		if !finishedTodo && !reorderingTodaysTodos
 			if (line =~ /\sROLLOVER/)
 				line.gsub!(/\sROLLOVER/, ' ROLLOVER+')
 			elsif (line =~ /\*IN-PROGRESS\*/) # Make sure in-progress status precedes rollover status
@@ -83,11 +91,14 @@ lines.each_with_index do |line, idx|
 	
 end
 
-# Put it in STDOUT
-todaysTodos.push('').concat(finishedTodos).each do |line|
-	puts line
 # If all Todos rolled over, say so.
 if !finishedTodos.last.strip.start_with?("-")
 	finishedTodos << "- All rolled over"
 end
 
+# Put it in STDOUT
+if reorderingTodaysTodos
+	putsStringArray(todaysTodos.concat(finishedTodos))
+else
+	putsStringArray(todaysTodos.push('').concat(finishedTodos))
+end
